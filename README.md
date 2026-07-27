@@ -1,23 +1,41 @@
-# AWS to STACKIT: A Static Website Migration 
+<div align="center">
+  <img src="https://wolkenwechsel.at/assets/icon.webp" alt="Papoa icon" width="96" />
+  <h1>AWS to STACKIT: A Static Website Migration </h1>
+  <p>
+    <img src="https://img.shields.io/badge/AWS-S3-orange?style=for-the-badge" />
+    <img src="https://img.shields.io/badge/AWS-Cloudfront-orange?style=for-the-badge" />
+    <img src="https://img.shields.io/badge/StackIT-ObjectStorage-blue?style=for-the-badge" />
+    <img src="https://img.shields.io/badge/StackIT-CDN-blue?style=for-the-badge" />
+  </p>
+  <hr/>
+</div>
 
 If you have built or managed a web project over the last decade, you are likely familiar with the standard AWS pattern: host static assets (HTML, CSS, JS) in an Amazon S3 bucket and place Amazon CloudFront in front as a Content Delivery Network (CDN). It is efficient, cost-effective, and widely adopted.
 
 We ran this exact architecture for our marketing website, **`wolkenwechsel.at`**.
 
-```
-[ Current AWS Architecture ]
+### Current AWS Architecture
 
-       User / Browser
-             │
-             ▼
-    ┌─────────────────┐
-    │ Amazon CloudFront│ (CDN & SSL)
-    └────────┬────────┘
-             │
-             ▼
-    ┌─────────────────┐
-    │   Amazon S3     │ (Static Website Hosting)
-    └────────┴────────┘
+```mermaid
+graph TD
+    User["User / Browser"] --> CF["Amazon CloudFront<br><i>(CDN & SSL)</i>"]
+    CF --> S3["Amazon S3<br><i>(Static Website Hosting)</i>"]
+    
+    %% Styling
+    style CF fill:#FF9900,stroke:#232F3E,stroke-width:2px,color:#232F3E
+    style S3 fill:#569A31,stroke:#232F3E,stroke-width:2px,color:#fff
+```
+
+### Target STACKIT Architecture
+
+```mermaid
+graph TD
+    User["User / Browser"] --> CDN["STACKIT CDN (Beta)<br><i>(CDN & SSL)</i>"]
+    CDN --> OBS["STACKIT Object Storage<br><i>(S3-Compatible Bucket)</i><br><i>(GDPR-Compliant EU Region)</i>"]
+    
+    %% Styling
+    style CDN fill:#003366,stroke:#001F3F,stroke-width:2px,color:#fff
+    style OBS fill:#0055A4,stroke:#001F3F,stroke-width:2px,color:#fff
 ```
 *(Diagram 1: Classic AWS S3 + CloudFront deployment flow)*
 
