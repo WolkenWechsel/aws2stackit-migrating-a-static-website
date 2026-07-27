@@ -11,7 +11,7 @@ We ran this exact architecture for our marketing website, **`wolkenwechsel.at`**
              │
              ▼
     ┌─────────────────┐
-    │ Amazon CloudFront│ (CDN & SSL Termination)
+    │ Amazon CloudFront│ (CDN & SSL)
     └────────┬────────┘
              │
              ▼
@@ -21,48 +21,74 @@ We ran this exact architecture for our marketing website, **`wolkenwechsel.at`**
 ```
 *(Diagram 1: Classic AWS S3 + CloudFront deployment flow)*
 
-Our goal now was to transition our own marketing website: execute a clean migration off US hyperscalers and move to **STACKIT**, the European cloud platform powered by Schwarz Group. 
+Our goal now was to transition our own marketing website: execute a clean migration off US hyperscalers and move to **STACKIT**, the European cloud platform powered by Schwarz Group.
+
+```
+[ Target STACKIT Architecture ]
+
+       User / Browser
+             │
+             ▼
+    ┌─────────────────────────┐
+    │   STACKIT CDN (Beta)    │ (CDN & SSL)
+    └───────────┬─────────────┘
+                │
+                ▼
+    ┌─────────────────────────────┐
+    │ STACKIT Object Storage      │ (S3-Compatible Bucket)
+    │ (GDPR-Compliant EU Region)  │
+    └─────────────────────────────┘
+```
+*(Diagram 2: Target STACKIT Object Storage + CDN deployment flow)*
 
 Here is our technical review—why transferring the data was straightforward, why the native CDN configuration encountered limitations in beta, and what a fully European setup requires today.
 
 ---
 
-## Step 1: Transferring Assets to STACKIT Object Storage via IaC & AWS CLI
+## Step 1: Creating the STACKIT Object Storage Bucket via Terraform / OpenTofu
 
-Using **Infrastructure as Code (IaC)** principles simplifies cloud migrations significantly. Because STACKIT provides an S3-compatible Object Storage API, no proprietary tools or complex conversion scripts were necessary.
+The first step is to provision the target bucket inside STACKIT using **Infrastructure as Code (IaC)**. Because STACKIT provides an S3-compatible Object Storage API, all resource definitions are declarative and fit naturally into a Terraform or OpenTofu workflow:
 
-Using the standard AWS CLI pointed to STACKIT endpoints, we mirrored our site assets in two commands:
+```hcl
+resource "stackit_objectstorage_bucket" "web-page" {
+  project_id = local.project_id
+  name       = "wolkenwechsel-stackit-bucket"
+}
+```
+
+---
+
+## Step 2: Transferring Assets to the Bucket via AWS CLI
+
+With the bucket ready, we can transfer our site files. Using the standard AWS CLI pointed to STACKIT endpoints, we mirror the assets in two commands:
 
 ```bash
 # 1. Download site files locally from AWS S3
 aws s3 sync s3://wolkenwechsel-aws-bucket ./site-files
 
-# 2. Upload directly to STACKIT Object Storage
-aws s3 sync ./site-files s3://wolkenwechsel-a-sample-bucket-123 \
+# 2. Upload directly to the STACKIT bucket
+aws s3 sync ./site-files s3://wolkenwechsel-stackit-bucket \
   --endpoint-url https://object.storage.eu01.onstackit.cloud
 ```
 
-The storage transfer was completed in seconds, placing all static files securely inside a GDPR-compliant European data center.
+The storage transfer completes in seconds, placing all static files securely inside a GDPR-compliant European data center.
 
 ---
 
-## Step 2: Configuring STACKIT CDN via Terraform / OpenTofu
+## Step 3: Configuring STACKIT CDN via Terraform / OpenTofu
 
-To turn an object storage bucket into a production website with HTTPS termination and edge caching, a CDN is required. STACKIT offers a **CDN service** (currently in **Beta**), which can be managed declaratively using Terraform or OpenTofu:
+To turn the populated bucket into a production website with HTTPS termination and edge caching, a CDN is required. STACKIT offers a **CDN service** (currently in **Beta**), which can be managed declaratively using Terraform or OpenTofu.
+
+Now that both the bucket and its contents exist, we add the CDN distribution to the same configuration:
 
 ```hcl
-resource "stackit_objectstorage_bucket" "my_bucket" {
-  project_id = local.project_id
-  name       = "wolkenwechsel-a-sample-bucket-123"
-}
-
-resource "stackit_cdn_distribution" "bucket_cdn375" {
+resource "stackit_cdn_distribution" "web-cdn" {
   project_id = local.project_id
 
   config = {
     backend = {
       type       = "bucket"
-      bucket_url = "https://wolkenwechsel-a-sample-bucket-123.object.storage.eu01.onstackit.cloud"
+      bucket_url = "https://wolkenwechsel-stackit-bucket.object.storage.eu01.onstackit.cloud"
       region     = local.region
 
       credentials = {
@@ -72,17 +98,8 @@ resource "stackit_cdn_distribution" "bucket_cdn375" {
     }
     regions = ["EU"]
   }
-
-  lifecycle {
-    ignore_changes = [
-      config
-    ]
-  }
 }
 ```
-
-The deployment executed cleanly, creating the distribution linked directly to our STACKIT bucket as the backend source.
-
 ---
 
 ## The Roadblock: Root URL Routing & Directory Exposure
