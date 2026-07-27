@@ -132,5 +132,5 @@ We will update this article as soon as STACKIT's CDN service exits beta and intr
 
 Schedule an initial consultation with our certified cloud architects to discuss your STACKIT migration requirements and evaluation strategy.
 
-* **Website:** [wolkenwechsel.at](wolkenwechsel.at)
+* **Website:** [https://wolkenwechsel.at](https://wolkenwechsel.at)
 * **Email:** [beratung@wolkenwechsel.at](mailto:beratung@wolkenwechsel.at)
