@@ -25,6 +25,9 @@ graph TD
     style CF fill:#FF9900,stroke:#232F3E,stroke-width:2px,color:#232F3E
     style S3 fill:#569A31,stroke:#232F3E,stroke-width:2px,color:#fff
 ```
+*(Diagram 1: Classic AWS S3 + CloudFront deployment flow)*
+
+Our goal now was to transition our own marketing website: execute a clean migration off US hyperscalers and move to **STACKIT**, the European cloud platform powered by Schwarz Group.
 
 ### Target STACKIT Architecture
 
@@ -36,26 +39,6 @@ graph TD
     %% Styling
     style CDN fill:#003366,stroke:#001F3F,stroke-width:2px,color:#fff
     style OBS fill:#0055A4,stroke:#001F3F,stroke-width:2px,color:#fff
-```
-*(Diagram 1: Classic AWS S3 + CloudFront deployment flow)*
-
-Our goal now was to transition our own marketing website: execute a clean migration off US hyperscalers and move to **STACKIT**, the European cloud platform powered by Schwarz Group.
-
-```
-[ Target STACKIT Architecture ]
-
-       User / Browser
-             │
-             ▼
-    ┌─────────────────────────┐
-    │   STACKIT CDN (Beta)    │ (CDN & SSL)
-    └───────────┬─────────────┘
-                │
-                ▼
-    ┌─────────────────────────────┐
-    │ STACKIT Object Storage      │ (S3-Compatible Bucket)
-    │ (GDPR-Compliant EU Region)  │
-    └─────────────────────────────┘
 ```
 *(Diagram 2: Target STACKIT Object Storage + CDN deployment flow)*
 
